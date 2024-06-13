@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Container, Form, HeaderList, NumbersOfPlayers } from "./styles";
 import Header from "../../components/Header";
 import Highlight from "../../components/Highlight";
@@ -9,18 +9,14 @@ import { Alert, FlatList, TextInput } from "react-native";
 import PlayerCard from "../../components/PlayerCard";
 import ListEmpty from "../../components/ListEmpty";
 import Button from "../../components/Button";
-import {
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-} from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { playerAddByGroup } from "../../storage/player/playerAddByGroup";
 import { AppError } from "../../utils/AppError";
-import { playersGetByGroup } from "../../storage/player/playersGetByGroup";
 import { PlayerStorageDTO } from "../../storage/player/playerStorageDTO";
 import { playerGetByGroupAndTeam } from "../../storage/player/playerGetByGroupAndTeam";
 import { playerRemoveByGroup } from "../../storage/player/playerRemoveByGroup";
 import { groupRemoveByName } from "../../storage/group/groupRemoveByName";
+import { useAppSelector } from "../../features/store";
 
 type RouteParams = {
   group: string;
@@ -37,9 +33,11 @@ export default function Players() {
 
   const newPlayerNameInputRef = useRef<TextInput>(null);
 
-  const route = useRoute();
+  const { groupName } = useAppSelector((state) => state.group);
 
-  const { group } = route.params as RouteParams;
+  // const route = useRoute();
+
+  // const { group } = route.params as RouteParams;
 
   const { navigate } = useNavigation();
 
@@ -57,7 +55,7 @@ export default function Players() {
     };
 
     try {
-      await playerAddByGroup(newPlayer, group);
+      await playerAddByGroup(newPlayer, groupName);
 
       newPlayerNameInputRef.current?.blur();
       setNewPlayerName("");
@@ -74,7 +72,7 @@ export default function Players() {
 
   async function fetchPlayersByTeam() {
     try {
-      const playersTeam = await playerGetByGroupAndTeam(group, team);
+      const playersTeam = await playerGetByGroupAndTeam(groupName, team);
 
       setPlayers(playersTeam);
     } catch (error) {
@@ -88,7 +86,7 @@ export default function Players() {
 
   async function handleRemovePlayer(playerName: string) {
     try {
-      await playerRemoveByGroup(playerName, group);
+      await playerRemoveByGroup(playerName, groupName);
       fetchPlayersByTeam();
     } catch (error) {
       console.log(error);
@@ -98,7 +96,7 @@ export default function Players() {
 
   async function groupRemove() {
     try {
-      await groupRemoveByName(group);
+      await groupRemoveByName(groupName);
       navigate("groups");
     } catch (error) {
       console.log(error);
@@ -128,7 +126,7 @@ export default function Players() {
       <Header showBackButton />
 
       <Highlight
-        title={group}
+        title={groupName}
         subTitle="adicione a galera e separe por times"
       />
 
