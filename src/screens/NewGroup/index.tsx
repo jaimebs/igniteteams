@@ -7,20 +7,32 @@ import { Container, Content, Icon } from "./styles";
 import { useNavigation } from "@react-navigation/native";
 import { groupCreate } from "../../storage/group/groupCreate";
 import { AppError } from "../../utils/AppError";
-import { Alert } from "react-native";
+import { Alert, Text } from "react-native";
+import * as yup from "yup";
+import { Controller, FieldValues, useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+
+const schema = yup.object().shape({
+  groupName: yup
+    .string()
+    .required("O nome do grupo é obrigatório!")
+    .min(3, "Tem que ser no mínimo 3 caracteres!"),
+});
 
 export default function NewGroup() {
   const { navigate } = useNavigation();
 
-  const [group, setGroup] = useState("");
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(schema),
+  });
 
-  async function handleNewGroup() {
+  async function handleNewGroup(formData: FieldValues) {
     try {
-      if (group.trim().length === 0) {
-        return Alert.alert("Novo Grupo", "Informe o nome da turma.");
-      }
-
-      await groupCreate(group.trim());
+      await groupCreate(formData.groupName.trim());
       navigate("groups");
     } catch (error) {
       if (error instanceof AppError) {
@@ -41,12 +53,20 @@ export default function NewGroup() {
           title="Nova Turma"
           subTitle="Crie a turma para adicionar as pessoas"
         />
-        <Input
-          placeholder="Nome da turma"
-          style={{ marginBottom: 20 }}
-          onChangeText={setGroup}
+        <Controller
+          control={control}
+          name="groupName"
+          render={({ field: { onChange, value } }) => (
+            <Input
+              placeholder="Nome da turma"
+              value={value}
+              onChangeText={onChange}
+              error={errors.groupName?.message}
+            />
+          )}
         />
-        <Button title="Criar" onPress={handleNewGroup} />
+
+        <Button title="Criar" onPress={handleSubmit(handleNewGroup)} />
       </Content>
     </Container>
   );
